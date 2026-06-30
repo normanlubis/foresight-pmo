@@ -56,8 +56,9 @@ with st.sidebar:
         ["📊 Project Overview",
          "🔮 Timeline Prediction",
          "👤 Owner Assignment",
-         "🔀 Scenario Simulation",
-         "💬 Ask the AI"],
+         "🔀 Scenario Simulation"
+        #  "💬 Ask the AI"
+         ],
         label_visibility="collapsed"
     )
     st.markdown("---")
@@ -562,56 +563,56 @@ elif page == "🔀 Scenario Simulation":
 # ═══════════════════════════════════════════════════════════════════════════════
 # PAGE 5 — Ask the AI
 # ═══════════════════════════════════════════════════════════════════════════════
-elif page == "💬 Ask the AI":
-    st.title("💬 Ask the AI")
-    st.caption("Chat with your Project Orchestrator about anything")
+# elif page == "💬 Ask the AI":
+#     st.title("💬 Ask the AI")
+#     st.caption("Chat with your Project Orchestrator about anything")
 
-    if "chat_history" not in st.session_state:
-        st.session_state["chat_history"] = []
+#     if "chat_history" not in st.session_state:
+#         st.session_state["chat_history"] = []
 
-    project_context = {
-        **compute_project_stats(),
-        "timeline": st.session_state.get("timeline_result", {}),
-        "team": [{"name":m["name"],"role":m["role"],"capacity":m["capacity_pct"]} for m in TEAM_MEMBERS],
-        "epics": [e["name"] for e in EPICS],
-    }
+#     project_context = {
+#         **compute_project_stats(),
+#         "timeline": st.session_state.get("timeline_result", {}),
+#         "team": [{"name":m["name"],"role":m["role"],"capacity":m["capacity_pct"]} for m in TEAM_MEMBERS],
+#         "epics": [e["name"] for e in EPICS],
+#     }
 
-    # Quick prompts
-    st.markdown("**Quick questions**")
-    qcols = st.columns(3)
-    quick_prompts = [
-        "What are the biggest delivery risks?",
-        "Which team members are overloaded?",
-        "What should the PM focus on this week?",
-        "Which epic is most at risk?",
-        "How can we improve team velocity?",
-        "What's the critical path to delivery?",
-    ]
-    for i, qp in enumerate(quick_prompts):
-        with qcols[i % 3]:
-            if st.button(qp, key=f"qp_{i}", width="stretch"):
-                st.session_state["pending_question"] = qp
+#     # Quick prompts
+#     st.markdown("**Quick questions**")
+#     qcols = st.columns(3)
+#     quick_prompts = [
+#         "What are the biggest delivery risks?",
+#         "Which team members are overloaded?",
+#         "What should the PM focus on this week?",
+#         "Which epic is most at risk?",
+#         "How can we improve team velocity?",
+#         "What's the critical path to delivery?",
+#     ]
+#     for i, qp in enumerate(quick_prompts):
+#         with qcols[i % 3]:
+#             if st.button(qp, key=f"qp_{i}", width="stretch"):
+#                 st.session_state["pending_question"] = qp
 
-    st.markdown("---")
+#     st.markdown("---")
 
-    # Chat history
-    for msg in st.session_state["chat_history"]:
-        role = msg["role"]
-        with st.chat_message(role):
-            st.markdown(msg["content"])
+#     # Chat history
+#     for msg in st.session_state["chat_history"]:
+#         role = msg["role"]
+#         with st.chat_message(role):
+#             st.markdown(msg["content"])
 
-    # Input
-    question = st.chat_input("Ask anything about the project…")
-    if not question and "pending_question" in st.session_state:
-        question = st.session_state.pop("pending_question")
+#     # Input
+#     question = st.chat_input("Ask anything about the project…")
+#     if not question and "pending_question" in st.session_state:
+#         question = st.session_state.pop("pending_question")
 
-    if question:
-        st.session_state["chat_history"].append({"role":"user","content":question})
-        with st.chat_message("user"):
-            st.markdown(question)
-        with st.chat_message("assistant"):
-            with st.spinner("Thinking…"):
-                answer = ai_chat_assistant(question, project_context)
-            st.markdown(answer)
-        st.session_state["chat_history"].append({"role":"assistant","content":answer})
-        st.rerun()
+#     if question:
+#         st.session_state["chat_history"].append({"role":"user","content":question})
+#         with st.chat_message("user"):
+#             st.markdown(question)
+#         with st.chat_message("assistant"):
+#             with st.spinner("Thinking…"):
+#                 answer = ai_chat_assistant(question, project_context)
+#             st.markdown(answer)
+#         st.session_state["chat_history"].append({"role":"assistant","content":answer})
+#         st.rerun()
