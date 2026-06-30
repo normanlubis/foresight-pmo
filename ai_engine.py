@@ -7,27 +7,49 @@ import streamlit as st
 
 from mock_data import CURRENT_DATE, TARGET_DATE, SPRINT_LENGTH_DAYS
 
+try:
+    from google.api_core import exceptions as api_exceptions
+except Exception:
+    api_exceptions = None
+
 # Using the recommended standard model for general text and reasoning tasks
-MODEL = "gemini-2.5-flash"
+# MODEL = "gemini-2.5-flash"
+# MODEL = "gemini-2.5-flash-lite"
+MODEL = "gemini-3.1-flash-lite"
 
 def _get_client():
     # The client automatically pulls GEMINI_API_KEY from the environment if api_key isn't explicit,
     # but we will pass it explicitly to match your previous setup.
     # return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
-    # 1. First, check if running on Streamlit Cloud Secrets
-    if "GEMINI_API_KEY" in st.secrets:
-        api_key = st.secrets["GEMINI_API_KEY"]
-    # 2. Fall back to local environment variables
-    else:
-        import os
-        api_key = os.environ.get("GEMINI_API_KEY")
-        
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        try:
+            api_key = st.secrets["GEMINI_API_KEY"]
+        except Exception:
+            api_key = None
+
     if not api_key:
         st.error("🔑 Gemini API Key not found! Please configure it in your environment or Streamlit Secrets.")
         st.stop()
-        
+
     return genai.Client(api_key=api_key)
+
+def _is_service_unavailable_error(exc: Exception) -> bool:
+    if api_exceptions is not None:
+        try:
+            if isinstance(exc, api_exceptions.ServiceUnavailable):
+                return True
+        except Exception:
+            pass
+
+    code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+    if code == 503:
+        return True
+
+    message = str(exc).upper()
+    return "UNAVAILABLE" in message or "503" in message
+
 
 def _chat(system: str, user: str, max_tokens: int = 900, response_schema: dict = None) -> str:
     client = _get_client()
@@ -43,12 +65,20 @@ def _chat(system: str, user: str, max_tokens: int = 900, response_schema: dict =
         config.response_mime_type = "application/json"
         config.response_schema = response_schema
 
-    resp = client.models.generate_content(
-        model=MODEL,
-        contents=user,
-        config=config,
-    )
-    return resp.text.strip()
+    try:
+        resp = client.models.generate_content(
+            model=MODEL,
+            contents=user,
+            config=config,
+        )
+        return resp.text.strip()
+    except Exception as exc:
+        if _is_service_unavailable_error(exc):
+            st.error(
+                "The AI model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later."
+            )
+            st.stop()
+        raise
 
 
 def _normalize_timeline_dates(result: dict) -> dict:
@@ -70,7 +100,7 @@ def ai_predict_timeline(stats: dict, sprint_history: list, scenario_overrides: d
 
     system = (
         "You are an expert software delivery coach and project forecaster. "
-        "Analyse sprint velocity data and project completion metrics."
+        "Analyse sprint velocity data and project completion metrics assuming all sprint team members are commited through project duraion."
     )
     user = f"""
 Project stats:

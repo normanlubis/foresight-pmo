@@ -120,7 +120,7 @@ def compute_project_stats():
     }
 
 # Sprint start date
-PROJECT_START = datetime(2026, 5, 17)
+PROJECT_START = datetime(2026, 3, 9)
 SPRINT_LENGTH_DAYS = 14
 CURRENT_DATE = datetime(2026, 6, 29)
-TARGET_DATE  = datetime(2026, 8, 17)
+TARGET_DATE  = datetime(2026, 10, 17)
